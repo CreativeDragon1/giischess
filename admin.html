@@ -5,9 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - GIIS Chess Championship</title>
     <link rel="stylesheet" href="styles.css">
-    
+    <style>
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .password-box {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+        .password-box h2 {
+            margin: 0 0 20px 0;
+            color: var(--text-primary);
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .password-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .password-box button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .password-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+        .password-error {
+            color: #ef4444;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .admin-content {
+            display: none;
+        }
+        .admin-content.unlocked {
+            display: block;
+        }
+    </style>
 </head>
 <body>
+    <!-- Password Protection -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-box">
+            <h2>Admin Access</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Enter password to continue</p>
+            <input type="password" id="passwordInput" placeholder="Password" autofocus>
+            <button onclick="checkPassword()">Unlock</button>
+            <p class="password-error" id="passwordError">Incorrect password. Please try again.</p>
+        </div>
+    </div>
+
+    <div class="admin-content" id="adminContent">
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -197,6 +275,7 @@
             <p style="color: var(--text-muted); margin-top: 10px; font-size: 0.9rem;">This will clear all player points and stats. Use at the start of a new season.</p>
         </div>
     </div>
+    </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -214,6 +293,37 @@
             const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
             localStorage.setItem('theme', theme);
         }
+
+        // Password Protection
+        const ADMIN_PASSWORD = 'ilovebobby123';
+        
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            
+            if (input.value === ADMIN_PASSWORD) {
+                document.getElementById('passwordOverlay').style.display = 'none';
+                document.getElementById('adminContent').classList.add('unlocked');
+                sessionStorage.setItem('adminAuth', 'true');
+            } else {
+                error.style.display = 'block';
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        // Check if already authenticated in this session
+        if (sessionStorage.getItem('adminAuth') === 'true') {
+            document.getElementById('passwordOverlay').style.display = 'none';
+            document.getElementById('adminContent').classList.add('unlocked');
+        }
+
+        // Allow Enter key to submit password
+        document.getElementById('passwordInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
     </script>
     
     <script src="admin.js"></script>
