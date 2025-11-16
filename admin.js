@@ -76,6 +76,91 @@ async function fetchLichessResults(tournamentId, tournamentType) {
     }
 }
 
+// Fetch full results (up to 200) for history backfill
+async function fetchFullLichessResults(tournamentId, tournamentType) {
+    try {
+        let response;
+        if (tournamentType === 'swiss') {
+            response = await fetch(`${LICHESS_API}/swiss/${tournamentId}/results?nb=200`);
+        } else {
+            response = await fetch(`${LICHESS_API}/tournament/${tournamentId}/results?nb=200`);
+        }
+        if (!response.ok) throw new Error('Failed to fetch full results');
+        const text = await response.text();
+        return text.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+    } catch (e) {
+        showAlert('Error fetching full results: ' + e.message, 'error');
+        return null;
+    }
+}
+
+// Fetch tournament info (name, timings)
+async function fetchLichessInfo(tournamentId, tournamentType) {
+    try {
+        const url = tournamentType === 'swiss'
+            ? `${LICHESS_API}/swiss/${tournamentId}`
+            : `${LICHESS_API}/tournament/${tournamentId}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Failed to fetch tournament info');
+        return await resp.json();
+    } catch (e) {
+        showAlert('Error fetching tournament info: ' + e.message, 'error');
+        return null;
+    }
+}
+
+// Backfill History from Lichess
+async function backfillHistoryFromLichess() {
+    const input = document.getElementById('historyUrl').value.trim();
+    const info = extractTournamentId(input);
+    if (!info) {
+        showAlert('Please enter a valid Lichess tournament URL (Swiss or Arena)', 'error');
+        return;
+    }
+    showAlert('Backfilling history from Lichess…', 'success');
+    const [meta, results] = await Promise.all([
+        fetchLichessInfo(info.id, info.type),
+        fetchFullLichessResults(info.id, info.type)
+    ]);
+    if (!results || results.length === 0) {
+        showAlert('No results found or tournament not finished yet', 'error');
+        return;
+    }
+    const normalized = results.map((p, idx) => ({
+        rank: p.rank ?? (idx + 1),
+        username: p.username,
+        score: p.score ?? null,
+        rating: p.rating ?? null,
+        performance: p.performance ?? null,
+        points: POINTS[idx + 1] || 0
+    }));
+    const ratings = normalized.map(n => n.rating).filter(r => typeof r === 'number');
+    const avgRating = ratings.length ? Math.round(ratings.reduce((a,b)=>a+b,0)/ratings.length) : null;
+    const name = meta?.name || 'Tournament';
+    const variant = meta?.variant || 'standard';
+    const link = info.type === 'swiss' ? `https://lichess.org/swiss/${info.id}` : `https://lichess.org/tournament/${info.id}`;
+    const finishedAt = Date.now();
+    const history = {
+        id: info.id,
+        name,
+        time: (meta?.startsAt || meta?.createdAt) ? new Date(meta.startsAt || meta.createdAt).toLocaleString() : '',
+        link,
+        variant,
+        type: info.type,
+        finishedAt,
+        participants: results.length,
+        averageRating: avgRating,
+        results: normalized
+    };
+    try {
+        await database.ref(`tournamentsHistory/${info.id}`).set(history);
+        showAlert('✅ History saved. Check Past Tournaments on the main site.');
+        document.getElementById('historyUrl').value = '';
+    } catch (e) {
+        showAlert('Error saving history: ' + e.message, 'error');
+    }
+}
+
 // Import results from Lichess
 async function importFromLichess() {
     const input = document.getElementById('lichessUrl').value.trim();

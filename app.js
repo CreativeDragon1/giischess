@@ -179,6 +179,11 @@ async function autoProcessIfFinished(tournament, tournamentInfo) {
         }
         await Promise.all(promises);
         await database.ref().update(updates);
+
+        // Save tournament history with full results
+        await saveTournamentHistory(tournament, tournamentInfo, results);
+
+        // Mark processed and deactivate
         await database.ref('activeTournament/processed').set(true);
         await database.ref('activeTournament/active').set(false);
     } catch (e) {
@@ -346,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadActiveTournament();
     loadLeaderboard();
     loadSeasonInfo();
+    loadPastTournaments();
     
     // Update live tournament data every 20 seconds
     setInterval(updateTournamentLiveData, 20000);
@@ -399,4 +405,110 @@ document.querySelectorAll('section').forEach(section => {
 // Export for admin panel usage
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { POINTS, getPointsForPosition, fetchTournamentInfo, fetchTournamentStandings };
+}
+
+// ========= Past Tournaments (History) =========
+async function saveTournamentHistory(tournament, tournamentInfo, results) {
+    try {
+        const id = tournamentInfo.id;
+        // Build normalized results with awarded points
+        const normalized = results.map((p, idx) => ({
+            rank: p.rank ?? (idx + 1),
+            username: p.username,
+            score: p.score ?? null,
+            rating: p.rating ?? null,
+            performance: p.performance ?? null,
+            points: getPointsForPosition(idx + 1)
+        }));
+
+        // Compute summary
+        const ratings = normalized.map(n => n.rating).filter(r => typeof r === 'number');
+        const avgRating = ratings.length ? Math.round(ratings.reduce((a,b)=>a+b,0)/ratings.length) : null;
+
+        const history = {
+            id,
+            name: tournament.name || 'Tournament',
+            time: tournament.time || '',
+            link: tournament.link || '',
+            variant: tournament.variant || 'standard',
+            type: tournamentInfo.type,
+            finishedAt: Date.now(),
+            participants: results.length,
+            averageRating: avgRating,
+            results: normalized
+        };
+
+        await database.ref(`tournamentsHistory/${id}`).set(history);
+    } catch (e) {
+        console.error('Failed saving history:', e);
+    }
+}
+
+function loadPastTournaments() {
+    const grid = document.getElementById('historyGrid');
+    if (!grid) return;
+    database.ref('tournamentsHistory').on('value', (snap) => {
+        const data = snap.val();
+        if (!data) {
+            grid.innerHTML = '<p class="no-data">No finished tournaments yet</p>';
+            return;
+        }
+        const items = Object.values(data).sort((a,b)=> (b.finishedAt||0) - (a.finishedAt||0));
+        grid.innerHTML = '';
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            const date = item.finishedAt ? new Date(item.finishedAt).toLocaleString() : (item.time || '');
+            const variantText = item.variant && item.variant !== 'standard' ? ` • ${formatVariant(item.variant)}` : '';
+            card.innerHTML = `
+                <div class="history-title">${item.name}${variantText}</div>
+                <div class="history-meta">${item.type?.toUpperCase() || ''} • ${date}</div>
+                <div class="history-stats">
+                    <span>${item.participants || 0} players</span>
+                    <span>${item.averageRating ? ('Avg rating: ' + item.averageRating) : ''}</span>
+                </div>
+                <div class="history-actions">
+                    <button class="btn btn-primary" data-tid="${item.id}">View Details</button>
+                    ${item.link ? `<a class="btn btn-success" href="${item.link}" target="_blank" rel="noopener">Lichess</a>` : ''}
+                </div>
+            `;
+            card.querySelector('button').addEventListener('click', ()=> openTournamentModal(item.id));
+            grid.appendChild(card);
+        });
+    });
+}
+
+async function openTournamentModal(id) {
+    const modal = document.getElementById('tournamentModal');
+    const body = document.getElementById('modalBody');
+    const title = document.getElementById('modalTitle');
+    const stats = document.getElementById('modalStats');
+    if (!modal || !body) return;
+    const snap = await database.ref(`tournamentsHistory/${id}`).once('value');
+    const data = snap.val();
+    if (!data) return;
+    title.textContent = data.name;
+    const avg = data.averageRating ? `Avg rating: ${data.averageRating}` : '';
+    stats.innerHTML = `<div class="stat">Type: ${data.type?.toUpperCase() || ''}</div>
+                       <div class="stat">Players: ${data.participants || 0}</div>
+                       <div class="stat">${avg}</div>`;
+    body.innerHTML = '';
+    (data.results || []).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${r.rank}</td>
+            <td class="player-name">${r.username}</td>
+            <td>${r.score ?? ''}</td>
+            <td>${r.points || 0}</td>
+            <td>${r.rating ?? ''}</td>
+            <td>${r.performance ?? ''}</td>
+        `;
+        body.appendChild(tr);
+    });
+    modal.style.display = 'flex';
+}
+
+function closeTournamentModal() {
+    const modal = document.getElementById('tournamentModal');
+    if (modal) modal.style.display = 'none';
 }

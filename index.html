@@ -14,7 +14,7 @@
                 GIIS <span>Chess Championship</span>
             </a>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="#home" class="active">Home</a></li>
                 <li><a href="#leaderboard">Leaderboard</a></li>
                 <li><a href="#about">About</a></li>
                 <li>
@@ -29,7 +29,7 @@
 
     <div class="container">
         <!-- Header -->
-        <header class="championship-header">
+        <header class="championship-header" id="home">
             <h1>GIIS Chess Championship</h1>
             <p class="tagline">F1-Style Tournament Series</p>
             <div class="season-info">
@@ -94,6 +94,14 @@
             </div>
         </section>
 
+        <!-- Past Tournaments -->
+        <section class="history-section" id="history">
+            <h2>Past Tournaments</h2>
+            <div id="historyGrid" class="history-grid">
+                <p class="no-data">No finished tournaments yet</p>
+            </div>
+        </section>
+
         <!-- Championship Info -->
         <section class="info-section" id="about">
             <div class="info-card">
@@ -149,12 +157,65 @@
                     if (target) {
                         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
+                    // Set active state on click
+                    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+                    this.classList.add('active');
                 });
             });
+            // Scroll spy to highlight nav based on section in view
+            const sectionMap = {
+                '#home': document.getElementById('home'),
+                '#leaderboard': document.getElementById('leaderboard'),
+                '#about': document.getElementById('about')
+            };
+            const linkMap = {
+                '#home': document.querySelector('.nav-links a[href="#home"]'),
+                '#leaderboard': document.querySelector('.nav-links a[href="#leaderboard"]'),
+                '#about': document.querySelector('.nav-links a[href="#about"]')
+            };
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const id = `#${entry.target.id}`;
+                    if (entry.isIntersecting) {
+                        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+                        if (linkMap[id]) linkMap[id].classList.add('active');
+                    }
+                });
+            }, { threshold: 0.6 });
+            Object.values(sectionMap).forEach(sec => sec && io.observe(sec));
         });
     </script>
     
     <!-- App Script -->
     <script src="app.js"></script>
+
+    <!-- Tournament Details Modal -->
+    <div id="tournamentModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tournament Details</h3>
+                <button class="modal-close" onclick="closeTournamentModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-stats" id="modalStats"></div>
+                <div class="modal-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Player</th>
+                                <th>Score</th>
+                                <th>Points</th>
+                                <th>Rating</th>
+                                <th>Perf</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

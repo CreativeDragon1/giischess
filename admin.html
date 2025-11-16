@@ -178,6 +178,16 @@
                 </div>
                 <button class="btn btn-success" onclick="importFromLichess()">Import Results from Lichess</button>
             </div>
+
+            <div class="import-card">
+                <h3>Backfill History from Lichess</h3>
+                <p>Save a finished tournament to the Past Tournaments list without updating season points.</p>
+                <div class="form-group">
+                    <label>Lichess Tournament URL</label>
+                    <input type="text" id="historyUrl" placeholder="https://lichess.org/swiss/ID or https://lichess.org/tournament/ID">
+                </div>
+                <button class="btn btn-primary" onclick="backfillHistoryFromLichess()">Backfill History</button>
+            </div>
             
             <h3 style="margin-bottom: 15px;">Manual Entry</h3>
             <div id="resultsForm" class="results-grid">
