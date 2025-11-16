@@ -202,6 +202,7 @@ body.dark-mode .theme-icon.moon {
     background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     position: relative;
     overflow: hidden;
+    margin-bottom: 5px;
 }
 
 .championship-header::before {
