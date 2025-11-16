@@ -198,11 +198,11 @@ body.dark-mode .theme-icon.moon {
 /* Header */
 .championship-header {
     text-align: center;
-    padding: 100px 20px 80px;
+    padding: 100px 20px 60px;
     background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     position: relative;
     overflow: hidden;
-    margin-bottom: 5px;
+    margin-bottom: 64px;
 }
 
 .championship-header::before {
@@ -265,7 +265,6 @@ body.dark-mode .theme-icon.moon {
 
 /* Active Tournament */
 .active-tournament {
-    margin-top: 64px;
     margin-bottom: 40px;
 }
 
@@ -743,6 +742,7 @@ footer p {
     
     .championship-header {
         padding: 50px 16px 40px;
+        margin-bottom: 32px;
     }
     
     .championship-header h1 {
@@ -769,7 +769,6 @@ footer p {
     }
     
     .active-tournament {
-        margin-top: 32px;
         margin-bottom: 32px;
     }
     
