@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - GIIS Chess Championship</title>
+    <link rel="stylesheet" href="styles.css">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                GIIS <span>Chess Championship</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="admin.html" class="active">Admin Panel</a></li>
+                <li>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+                        <span class="theme-icon moon">🌙</span>
+                        <span class="theme-icon sun">☀️</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="championship-header">
+            <h1>Admin Panel</h1>
+            <p class="tagline">Manage GIIS Chess Championship</p>
+        </header>
+
+        <div class="alert" id="alertBox"></div>
+
+        <!-- Tab Navigation -->
+        <div class="admin-nav">
+            <button class="tab-btn active" onclick="showTab('tournament')">Tournaments</button>
+            <button class="tab-btn" onclick="showTab('results')">Results</button>
+            <button class="tab-btn" onclick="showTab('players')">Players</button>
+            <button class="tab-btn" onclick="showTab('season')">Season</button>
+        </div>
+
+        <!-- Tournament Management -->
+        <div id="tournament-tab" class="tab-content active admin-panel">
+            <h2>Tournament Management</h2>
+            
+            <h3>Set Active Tournament</h3>
+            <div class="form-group">
+                <label>Tournament Name</label>
+                <input type="text" id="activeName" placeholder="e.g., GIIS Chess Round 1">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="activeDate">
+            </div>
+            <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="activeTime">
+            </div>
+            <div class="form-group">
+                <label>Lichess Link</label>
+                <input type="url" id="activeLink" placeholder="https://lichess.org/tournament/... or https://lichess.org/swiss/...">
+            </div>
+            <div class="form-group">
+                <label>Variant</label>
+                <select id="activeVariant">
+                    <option value="standard">Standard</option>
+                    <option value="crazyhouse">Crazyhouse</option>
+                    <option value="chess960">Chess960</option>
+                    <option value="kingOfTheHill">King of the Hill</option>
+                    <option value="threeCheck">Three-check</option>
+                    <option value="antichess">Antichess</option>
+                    <option value="atomic">Atomic</option>
+                    <option value="horde">Horde</option>
+                    <option value="racingKings">Racing Kings</option>
+                </select>
+            </div>
+            <div class="admin-actions">
+                <button class="btn btn-primary" onclick="setActiveTournament()">Set as Active</button>
+                <button class="btn btn-success" onclick="clearActiveTournament()">Clear Active</button>
+            </div>
+
+            
+        </div>
+
+        <!-- Results Management -->
+        <div id="results-tab" class="tab-content admin-panel">
+            <h2>Update Tournament Results</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Enter player names for each position. Points will be awarded automatically (F1 style).</p>
+            
+            <div class="import-card">
+                <h3>Auto-Import from Lichess</h3>
+                <p>Enter a Lichess tournament URL (Swiss or Arena) to automatically fetch the top 10 results. Tournament must be finished.</p>
+                <div class="form-group">
+                    <label>Lichess Tournament URL</label>
+                    <input type="text" id="lichessUrl" placeholder="https://lichess.org/swiss/cqyFH8oh or https://lichess.org/tournament/XXXXX">
+                </div>
+                <button class="btn btn-success" onclick="importFromLichess()">Import Results from Lichess</button>
+            </div>
+            
+            <h3 style="margin-bottom: 15px;">Manual Entry</h3>
+            <div id="resultsForm" class="results-grid">
+                <div class="results-input">
+                    <span>1st (25pts)</span>
+                    <input type="text" id="pos1" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>2nd (18pts)</span>
+                    <input type="text" id="pos2" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>3rd (15pts)</span>
+                    <input type="text" id="pos3" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>4th (12pts)</span>
+                    <input type="text" id="pos4" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>5th (10pts)</span>
+                    <input type="text" id="pos5" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>6th (8pts)</span>
+                    <input type="text" id="pos6" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>7th (6pts)</span>
+                    <input type="text" id="pos7" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>8th (4pts)</span>
+                    <input type="text" id="pos8" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>9th (2pts)</span>
+                    <input type="text" id="pos9" placeholder="Player name">
+                </div>
+                <div class="results-input">
+                    <span>10th (1pt)</span>
+                    <input type="text" id="pos10" placeholder="Player name">
+                </div>
+            </div>
+            <div class="admin-actions" style="margin-top: 16px;">
+                <button class="btn btn-primary" onclick="submitResults()">Submit Results & Update Leaderboard</button>
+            </div>
+        </div>
+
+        <!-- Players Management -->
+        <div id="players-tab" class="tab-content admin-panel">
+            <h2>Player Management</h2>
+            
+            <h3>Add New Player</h3>
+            <div class="form-group">
+                <label>Player Name</label>
+                <input type="text" id="playerName" placeholder="Enter player name">
+            </div>
+            <button class="btn btn-success" onclick="addPlayer()">Add Player</button>
+
+            <hr style="margin: 30px 0; opacity: 0.2;">
+
+            <h3>Current Players</h3>
+            <div id="playersList" style="max-height: 400px; overflow-y: auto;">
+                <p class="no-data">Loading players...</p>
+            </div>
+        </div>
+
+        <!-- Season Management -->
+        <div id="season-tab" class="tab-content admin-panel">
+            <h2>Season Settings</h2>
+            
+            <div class="form-group">
+                <label>Total Rounds in Season</label>
+                <input type="number" id="totalRounds" placeholder="e.g., 10" min="1">
+            </div>
+            <div class="form-group">
+                <label>Current Round</label>
+                <input type="number" id="currentRound" placeholder="e.g., 1" min="0">
+            </div>
+            <div class="form-group">
+                <label>Season Status</label>
+                <select id="seasonStatus">
+                    <option value="Season Active">Season Active</option>
+                    <option value="Pre-Season">Pre-Season</option>
+                    <option value="Season Ended">Season Ended</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="updateSeasonInfo()">Update Season Info</button>
+
+            <hr style="margin: 30px 0; opacity: 0.2;">
+
+            <h3>Danger Zone</h3>
+            <button class="btn btn-primary" onclick="resetLeaderboard()" style="background: #ef4444;">Reset Leaderboard</button>
+            <p style="color: var(--text-muted); margin-top: 10px; font-size: 0.9rem;">This will clear all player points and stats. Use at the start of a new season.</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Theme Toggle Script -->
+    <script>
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        }
+    </script>
+    
+    <script src="admin.js"></script>
+</body>
+</html>
